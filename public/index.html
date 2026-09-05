@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Expense Tracker & Financial Dashboard</title>
+  <meta name="description" content="Manage your daily expenses, track monthly budgets, visualize category breakdowns, and take control of your financial health.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Background Glowing Orbs -->
+  <div class="bg-gradient-orb orb-1"></div>
+  <div class="bg-gradient-orb orb-2"></div>
+  <div class="bg-gradient-orb orb-3"></div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Authentication Container (Shown when logged out) -->
+  <div id="auth-container" class="auth-wrapper">
+    <div class="auth-card glass-panel">
+      <div class="auth-header">
+        <div class="brand-logo">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <h2>ExpenseTracker<span class="text-accent">.ai</span></h2>
+        <p id="auth-subtitle">Welcome back! Log in to manage your budget & track expenses.</p>
+      </div>
+
+      <!-- Auth Tabs -->
+      <div class="auth-tabs">
+        <button id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">
+          <i class="fa-solid fa-right-to-bracket"></i> Login
+        </button>
+        <button id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">
+          <i class="fa-solid fa-user-plus"></i> Register
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="login-email"><i class="fa-solid fa-envelope"></i> Email Address</label>
+          <input type="email" id="login-email" required placeholder="alex@example.com" value="demo@example.com">
+        </div>
+        <div class="form-group">
+          <label for="login-password"><i class="fa-solid fa-lock"></i> Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" value="password123">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <span>Sign In</span> <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <div class="quick-demo-hint">
+          <button type="button" class="btn-link" onclick="fillDemoCredentials()">✨ Auto-fill Demo Account</button>
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="reg-name"><i class="fa-solid fa-user"></i> Full Name</label>
+          <input type="text" id="reg-name" required placeholder="Alex Morgan">
+        </div>
+        <div class="form-group">
+          <label for="reg-email"><i class="fa-solid fa-envelope"></i> Email Address</label>
+          <input type="email" id="reg-email" required placeholder="alex@example.com">
+        </div>
+        <div class="form-group">
+          <label for="reg-password"><i class="fa-solid fa-lock"></i> Password</label>
+          <input type="password" id="reg-password" required placeholder="At least 6 characters" minlength="6">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-currency"><i class="fa-solid fa-coins"></i> Currency</label>
+            <select id="reg-currency">
+              <option value="$">USD ($)</option>
+              <option value="€">EUR (€)</option>
+              <option value="£">GBP (£)</option>
+              <option value="₹">INR (₹)</option>
+              <option value="¥">JPY (¥)</option>
+              <option value="A$">AUD (A$)</option>
+              <option value="C$">CAD (C$)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="reg-budget"><i class="fa-solid fa-bullseye"></i> Monthly Budget</label>
+            <input type="number" id="reg-budget" placeholder="2500" value="2500" min="0" step="50">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <span>Create Free Account</span> <i class="fa-solid fa-user-check"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Application Layout (Shown when logged in) -->
+  <div id="app-container" class="app-layout hidden">
+    
+    <!-- Navbar / Header -->
+    <header class="app-header glass-panel">
+      <div class="header-brand">
+        <div class="brand-logo">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <h1>ExpenseTracker<span class="text-accent">.ai</span></h1>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-emerald" onclick="openExpenseModal()">
+          <i class="fa-solid fa-plus"></i> <span>Add Expense</span>
+        </button>
+
+        <!-- User Profile Dropdown / Trigger -->
+        <div class="user-profile-widget" onclick="openProfileModal()">
+          <div class="avatar-circle" id="user-avatar-display">A</div>
+          <div class="user-info-text">
+            <span class="user-name" id="display-user-name">Alex Morgan</span>
+            <span class="user-role" id="display-user-email">alex@example.com</span>
+          </div>
+          <i class="fa-solid fa-gear settings-icon"></i>
+        </div>
+
+        <button class="btn btn-ghost btn-icon" onclick="handleLogout()" title="Log out">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="dashboard-content">
+      
+      <!-- Top Metrics Dashboard Cards -->
+      <section class="metrics-grid">
+        <!-- Card 1: Total Expense -->
+        <div class="metric-card glass-panel">
+          <div class="card-icon icon-red">
+            <i class="fa-solid fa-receipt"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Total Expenses</span>
+            <h2 class="metric-value" id="stat-total-expense">$0.00</h2>
+            <span class="metric-subtext" id="stat-total-count">0 transactions recorded</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Current Month Spending -->
+        <div class="metric-card glass-panel">
+          <div class="card-icon icon-purple">
+            <i class="fa-solid fa-calendar-check"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Monthly Spending</span>
+            <h2 class="metric-value" id="stat-monthly-expense">$0.00</h2>
+            <span class="metric-subtext" id="stat-month-name">This Month</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Top Category -->
+        <div class="metric-card glass-panel">
+          <div class="card-icon icon-blue">
+            <i class="fa-solid fa-chart-pie"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Top Category</span>
+            <h2 class="metric-value text-truncate" id="stat-top-category">N/A</h2>
+            <span class="metric-subtext" id="stat-top-category-amount">$0.00 spent</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Monthly Budget Goal & Progress -->
+        <div class="metric-card glass-panel">
+          <div class="card-icon icon-emerald">
+            <i class="fa-solid fa-bullseye"></i>
+          </div>
+          <div class="metric-info">
+            <div class="metric-label-row">
+              <span class="metric-label">Monthly Budget</span>
+              <span class="budget-status-badge" id="budget-status-text">On Track</span>
+            </div>
+            <h2 class="metric-value" id="stat-budget-remaining">$0.00 left</h2>
+            <div class="budget-progress-bar">
+              <div class="progress-fill" id="budget-progress-fill" style="width: 0%"></div>
+            </div>
+            <span class="metric-subtext" id="stat-budget-limit">Budget: $2,500.00</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Charts & Visual Analytics Section -->
+      <section class="charts-grid">
+        <!-- Chart 1: Category Distribution Doughnut -->
+        <div class="chart-card glass-panel">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-chart-pie text-accent"></i> Spending by Category</h3>
+            <button class="btn-icon-sm" onclick="refreshAnalytics()" title="Refresh Data">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+          </div>
+          <div class="chart-container">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Monthly Expenses Trend Bar/Line -->
+        <div class="chart-card glass-panel">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-chart-column text-accent"></i> Monthly Expense Summary</h3>
+            <span class="badge badge-subtle">Historical Trends</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="monthlyChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Expense Manager Toolbar (Search, Filters, Date Controls) -->
+      <section class="table-section glass-panel">
+        <div class="toolbar-header">
+          <div class="section-title">
+            <h3><i class="fa-solid fa-list-check text-accent"></i> Expense Log & Transactions</h3>
+            <span class="count-badge" id="expense-count-badge">0 items</span>
+          </div>
+
+          <div class="toolbar-actions">
+            <!-- Filter by Category -->
+            <div class="filter-group">
+              <i class="fa-solid fa-tag filter-icon"></i>
+              <select id="filter-category" class="select-input" onchange="applyFilters()">
+                <option value="All">All Categories</option>
+              </select>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="filter-group date-group">
+              <i class="fa-solid fa-calendar filter-icon"></i>
+              <input type="date" id="filter-start-date" class="date-input" title="Start Date" onchange="applyFilters()">
+              <span class="date-separator">to</span>
+              <input type="date" id="filter-end-date" class="date-input" title="End Date" onchange="applyFilters()">
+              <button class="btn btn-ghost btn-sm" onclick="resetDateFilter()" title="Clear date filter">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <!-- Quick Preset Buttons -->
+            <div class="preset-buttons">
+              <button class="btn btn-xs active" id="preset-all" onclick="setPresetDate('all')">All</button>
+              <button class="btn btn-xs" id="preset-month" onclick="setPresetDate('month')">This Month</button>
+              <button class="btn btn-xs" id="preset-30days" onclick="setPresetDate('30days')">Last 30 Days</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Bar and Sort Options -->
+        <div class="toolbar-search-row">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="search-input" placeholder="Search expense description, notes, or payment method..." oninput="handleSearchInput()">
+            <button id="clear-search-btn" class="clear-search-btn hidden" onclick="clearSearch()">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </button>
+          </div>
+
+          <div class="sort-box">
+            <label for="sort-by"><i class="fa-solid fa-sort"></i> Sort:</label>
+            <select id="sort-by" class="select-input-sm" onchange="applyFilters()">
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="amount-desc">Amount: High to Low</option>
+              <option value="amount-asc">Amount: Low to High</option>
+              <option value="title-asc">Title: A to Z</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Expense Table Container -->
+        <div class="table-responsive">
+          <table class="expense-table">
+            <thead>
+              <tr>
+                <th>Transaction</th>
+                <th>Category</th>
+                <th>Payment Method</th>
+                <th>Date</th>
+                <th class="text-right">Amount</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="expense-table-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+
+          <!-- Empty State Container -->
+          <div id="empty-state" class="empty-state hidden">
+            <div class="empty-icon"><i class="fa-solid fa-receipt"></i></div>
+            <h4>No Expenses Found</h4>
+            <p>No transactions match your current search filters or date range.</p>
+            <button class="btn btn-primary" onclick="openExpenseModal()">
+              <i class="fa-solid fa-plus"></i> Add Your First Expense
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL 1: Add / Edit Expense Modal -->
+  <div id="expense-modal" class="modal-overlay hidden">
+    <div class="modal-card glass-panel">
+      <div class="modal-header">
+        <h3 id="modal-expense-title"><i class="fa-solid fa-receipt text-accent"></i> Add New Expense</h3>
+        <button class="close-btn" onclick="closeExpenseModal()">&times;</button>
+      </div>
+
+      <form id="expense-form" onsubmit="handleExpenseFormSubmit(event)">
+        <input type="hidden" id="expense-id">
+        
+        <div class="form-group">
+          <label for="expense-title-input"><i class="fa-solid fa-heading"></i> Expense Title *</label>
+          <input type="text" id="expense-title-input" required placeholder="e.g., Grocery Shopping, Uber ride, Electricity bill">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expense-amount-input"><i class="fa-solid fa-dollar-sign"></i> Amount *</label>
+            <input type="number" id="expense-amount-input" required placeholder="0.00" min="0.01" step="0.01">
+          </div>
+
+          <div class="form-group">
+            <label for="expense-category-input"><i class="fa-solid fa-tags"></i> Category *</label>
+            <div class="select-with-btn">
+              <select id="expense-category-input" required>
+                <!-- Loaded dynamically -->
+              </select>
+              <button type="button" class="btn btn-ghost btn-icon" onclick="openCategoryModal()" title="Add Custom Category">
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expense-date-input"><i class="fa-solid fa-calendar-days"></i> Date *</label>
+            <input type="date" id="expense-date-input" required>
+          </div>
+
+          <div class="form-group">
+            <label for="expense-payment-input"><i class="fa-solid fa-credit-card"></i> Payment Method</label>
+            <select id="expense-payment-input">
+              <option value="Credit Card">Credit Card</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="UPI">UPI</option>
+              <option value="PayPal">PayPal</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="expense-notes-input"><i class="fa-solid fa-note-sticky"></i> Notes / Description (Optional)</label>
+          <textarea id="expense-notes-input" rows="2" placeholder="Add additional details, store name, invoice ref..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeExpenseModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-expense">
+            <i class="fa-solid fa-check"></i> Save Expense
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: User Profile & Budget Settings Modal -->
+  <div id="profile-modal" class="modal-overlay hidden">
+    <div class="modal-card glass-panel">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-gear text-accent"></i> User Profile & Budget</h3>
+        <button class="close-btn" onclick="closeProfileModal()">&times;</button>
+      </div>
+
+      <form id="profile-form" onsubmit="handleProfileFormSubmit(event)">
+        <div class="form-group">
+          <label for="profile-name"><i class="fa-solid fa-user"></i> Full Name</label>
+          <input type="text" id="profile-name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="profile-email"><i class="fa-solid fa-envelope"></i> Email Address</label>
+          <input type="email" id="profile-email" disabled class="input-disabled">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profile-currency"><i class="fa-solid fa-coins"></i> Currency Symbol</label>
+            <select id="profile-currency">
+              <option value="$">USD ($)</option>
+              <option value="€">EUR (€)</option>
+              <option value="£">GBP (£)</option>
+              <option value="₹">INR (₹)</option>
+              <option value="¥">JPY (¥)</option>
+              <option value="A$">AUD (A$)</option>
+              <option value="C$">CAD (C$)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="profile-budget"><i class="fa-solid fa-bullseye"></i> Monthly Budget Target</label>
+            <input type="number" id="profile-budget" required min="0" step="50">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="profile-password"><i class="fa-solid fa-key"></i> New Password (Leave blank to keep unchanged)</label>
+          <input type="password" id="profile-password" placeholder="••••••••">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeProfileModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Update Profile
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Add Custom Category Modal -->
+  <div id="category-modal" class="modal-overlay hidden">
+    <div class="modal-card glass-panel modal-sm">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-folder-plus text-accent"></i> Add Custom Category</h3>
+        <button class="close-btn" onclick="closeCategoryModal()">&times;</button>
+      </div>
+
+      <form id="category-form" onsubmit="handleCategoryFormSubmit(event)">
+        <div class="form-group">
+          <label for="cat-name-input"><i class="fa-solid fa-tag"></i> Category Name *</label>
+          <input type="text" id="cat-name-input" required placeholder="e.g. Fitness & Gym, Pets, Subscriptions">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cat-icon-input"><i class="fa-solid fa-face-smile"></i> Emoji Icon</label>
+            <input type="text" id="cat-icon-input" placeholder="🏋️" value="🏷️" maxlength="4">
+          </div>
+
+          <div class="form-group">
+            <label for="cat-color-input"><i class="fa-solid fa-palette"></i> Badge Color</label>
+            <input type="color" id="cat-color-input" value="#6366f1" class="color-picker-input">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeCategoryModal()">Cancel</button>
+          <button type="submit" class="btn btn-emerald">
+            <i class="fa-solid fa-plus"></i> Add Category
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Application Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
