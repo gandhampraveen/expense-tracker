@@ -30,9 +30,17 @@ app.use('/api', authRoutes);
 app.use('/api', expenseRoutes);
 app.use('/api', categoryRoutes);
 
+// Health Check Endpoint for Render / Railway / Cloud Monitoring
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
+});
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
+});
+
 // SPA Fallback: Send index.html for non-API routes
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/register') || req.path.startsWith('/login') || req.path.startsWith('/expense') || req.path.startsWith('/profile') || req.path.startsWith('/categories') || req.path.startsWith('/api')) {
+  if (req.path.startsWith('/register') || req.path.startsWith('/login') || req.path.startsWith('/expense') || req.path.startsWith('/profile') || req.path.startsWith('/categories') || req.path.startsWith('/api') || req.path.startsWith('/health')) {
     return next();
   }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -45,7 +53,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`====================================================`);
   console.log(`🚀 Expense Tracker System Server active on port ${PORT}`);
   console.log(`🌐 Local Web Dashboard: http://localhost:${PORT}`);
