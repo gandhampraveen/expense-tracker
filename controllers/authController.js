@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Category = require('../models/Category');
 const bcrypt = require('bcryptjs');
@@ -35,6 +36,12 @@ const seedDefaultCategories = async (userId) => {
 // @route POST /register
 exports.registerUser = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ 
+        message: 'Database connection is not ready. Please set the MONGODB_URI environment variable in your cloud deployment settings.' 
+      });
+    }
+
     const { name, email, password, currency, monthlyBudget } = req.body;
 
     if (!name || !email || !password) {
@@ -86,6 +93,12 @@ exports.registerUser = async (req, res) => {
 // @route POST /login
 exports.loginUser = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ 
+        message: 'Database connection is not ready. Please set the MONGODB_URI environment variable in your cloud deployment settings.' 
+      });
+    }
+
     const { email, password } = req.body;
 
     if (!email || !password) {
